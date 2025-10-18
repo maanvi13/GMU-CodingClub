@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programming Quiz</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --java: #FFD700;
+            --python: #4B8BBE;
+            --c: #00599C;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --correct: #10b981;
+            --incorrect: #ef4444;
+            --neon-blue: #00f0ff;
+            --neon-green: #39ff14;
+            --neon-purple: #b967ff;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-dark), #1a202c);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Tech background elements */
+        .circuit-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 10% 20%, white 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, white 0%, transparent 20%),
+                linear-gradient(90deg, transparent 49%, rgba(0,240,255,0.1) 50%, transparent 51%),
+                linear-gradient(0deg, transparent 49%, rgba(0,240,255,0.1) 50%, transparent 51%);
+            background-size: 100px 100px;
+        }
+
+        .code-snippet {
+            position: fixed;
+            opacity: 0.03;
+            font-family: monospace;
+            font-size: 14px;
+            z-index: -1;
+            white-space: pre;
+            line-height: 1.4;
+        }
+
+        .snippet-1 { top: 10%; left: 5%; }
+        .snippet-2 { bottom: 15%; right: 8%; transform: rotate(15deg); }
+        .snippet-3 { top: 40%; right: 15%; transform: rotate(-10deg); }
+
+        /* Navbar */
+        nav {
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+            letter-spacing: 1px;
+        }
+
+        /* Main container */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Home screen */
+        .home-screen {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .language-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .language-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .language-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .language-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--neon-blue);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .language-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .language-card.java::before { background: var(--java); }
+        .language-card.python::before { background: var(--python); }
+        .language-card.c::before { background: var(--c); }
+
+        .language-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .language-card.java .language-icon { color: var(--java); }
+        .language-card.python .language-icon { color: var(--python); }
+        .language-card.c .language-icon { color: var(--c); }
+
+        .language-name {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .language-desc {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        /* Quiz screen */
+        .quiz-screen {
+            display: none;
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .quiz-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .progress-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            height: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .question-counter {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            margin: 20px 0 25px;
+            line-height: 1.5;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 16px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            border: 2px solid transparent;
+        }
+
+        .option:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .option.selected {
+            border-color: var(--neon-blue);
+            background: rgba(0, 240, 255, 0.1);
+        }
+
+        .option.correct {
+            border-color: var(--correct);
+            background: rgba(16, 185, 129, 0.15);
+        }
+
+        .option.incorrect {
+            border-color: var(--incorrect);
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        .option-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: block;
+            width: 100%;
+            text-align: center;
+            letter-spacing: 0.5px;
+            box-shadow: 0 5px 15px rgba(0, 240, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 240, 255, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Results screen */
+        .results-screen {
+            display: none;
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .score-display {
+            font-size: 5rem;
+            font-weight: 800;
+            margin: 20px 0;
+            background: linear-gradient(90deg, var(--neon-green), var(--neon-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+        }
+
+        .result-message {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            color: var(--neon-green);
+        }
+
+        .home-btn {
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-blue));
+            padding: 14px 40px;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            .language-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .logo {
+                font-size: 1.8rem;
+            }
+            
+            .quiz-title {
+                font-size: 1.5rem;
+            }
+            
+            .question-text {
+                font-size: 1.2rem;
+            }
+            
+            .score-display {
+                font-size: 4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tech background elements -->
+    <div class="circuit-bg"></div>
+    <div class="code-snippet snippet-1">
+function quiz() {
+  let score = 0;
+  // Interactive quiz logic
+  return score;
+}
+    </div>
+    <div class="code-snippet snippet-2">
+const languages = ['Java', 'Python', 'C'];
+languages.forEach(lang => {
+  createQuiz(lang);
+});
+    </div>
+    <div class="code-snippet snippet-3">
+// TechQuiz Arena
+// Modern coding quiz interface
+// Responsive design
+    </div>
+
+    <!-- Navbar -->
+    <nav>
+        <div class="logo">Programming Quiz</div>
+    </nav>
+
+    <div class="container">
+        <!-- Home Screen -->
+        <div class="home-screen" id="homeScreen">
+            <h1 style="text-align: center; font-size: 2.5rem; margin-bottom: 10px;">Master Programming Languages</h1>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 30px; font-size: 1.1rem;">
+                Test your knowledge with our interactive coding quizzes
+            </p>
+            
+            <div class="language-cards">
+                <div class="language-card java" data-language="java">
+                    <i class="fab fa-java language-icon"></i>
+                    <h2 class="language-name">Java</h2>
+                    <p class="language-desc">Object-oriented programming language known for its "write once, run anywhere" capability.</p>
+                </div>
+                
+                <div class="language-card python" data-language="python">
+                    <i class="fab fa-python language-icon"></i>
+                    <h2 class="language-name">Python</h2>
+                    <p class="language-desc">High-level, versatile language with simple syntax, perfect for beginners and experts alike.</p>
+                </div>
+                
+                <div class="language-card c" data-language="c">
+                    <div class="language-icon" style="color: var(--c); font-size: 3.5rem; margin-bottom: 15px;">C</div>
+                    <h2 class="language-name">C</h2>
+                    <p class="language-desc">Foundational language that powers operating systems and embedded systems worldwide.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div class="quiz-screen" id="quizScreen">
+            <div class="quiz-header">
+                <h2 class="quiz-title" id="currentLanguage">Java Quiz</h2>
+                <button class="btn" id="homeBtn" style="width: auto; padding: 8px 20px; font-size: 0.9rem;">
+                    <i class="fas fa-home"></i> Home
+                </button>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <div class="question-counter" id="questionCounter">Question 1 of 5</div>
+            <div class="question-text" id="questionText">What is the correct way to declare a variable in Java?</div>
+            
+            <div class="options-container" id="optionsContainer">
+                <!-- Options will be populated by JavaScript -->
+            </div>
+            
+            <button class="btn" id="nextBtn">Next Question</button>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="results-screen" id="resultsScreen">
+            <h2>Quiz Completed!</h2>
+            <div class="score-display" id="finalScore">4/5</div>
+            <div class="result-message" id="resultMessage">Great job! You're a coding pro!</div>
+            <button class="btn home-btn" id="backToHomeBtn">Go Back to Home</button>
+        </div>
+    </div>
+
+    <script>
+        // Quiz data for each language (HTML removed)
+        const quizData = {
+            java: [
+                {
+                    question: "What is the correct way to declare a variable in Java?",
+                    options: ["var x = 10;", "int x = 10;", "x = 10;", "declare x = 10;"],
+                    answer: 1
+                },
+                {
+                    question: "Which of these is NOT a Java keyword?",
+                    options: ["static", "void", "main", "String"],
+                    answer: 3
+                },
+                {
+                    question: "What is the parent class of all classes in Java?",
+                    options: ["Object", "Class", "Root", "Base"],
+                    answer: 0
+                },
+                {
+                    question: "How do you create a single-line comment in Java?",
+                    options: ["// Comment", "/* Comment */", "<!-- Comment -->", "# Comment"],
+                    answer: 0
+                },
+                {
+                    question: "Which method is the entry point for a Java application?",
+                    options: ["start()", "main()", "init()", "run()"],
+                    answer: 1
+                }
+            ],
+            python: [
+                {
+                    question: "How do you define a function in Python?",
+                    options: ["function myFunc():", "def myFunc():", "func myFunc():", "define myFunc():"],
+                    answer: 1
+                },
+                {
+                    question: "Which data type is mutable in Python?",
+                    options: ["tuple", "string", "list", "int"],
+                    answer: 2
+                },
+                {
+                    question: "What is the output of '2' + '2' in Python?",
+                    options: ["4", "'4'", "'22'", "Error"],
+                    answer: 2
+                },
+                {
+                    question: "How do you install a package using pip?",
+                    options: ["pip install package", "pip add package", "pip get package", "pip download package"],
+                    answer: 0
+                },
+                {
+                    question: "Which keyword is used to create a class in Python?",
+                    options: ["class", "def", "object", "create"],
+                    answer: 0
+                }
+            ],
+            c: [
+                {
+                    question: "What is the correct way to include the standard input/output library in C?",
+                    options: ["#include <stdio.h>", "#include stdio.h", "import stdio.h", "using stdio.h"],
+                    answer: 0
+                },
+                {
+                    question: "Which operator is used to get the address of a variable in C?",
+                    options: ["*", "&", "@", "#"],
+                    answer: 1
+                },
+                {
+                    question: "What is the size of an int in C (typically)?",
+                    options: ["2 bytes", "4 bytes", "8 bytes", "16 bytes"],
+                    answer: 1
+                },
+                {
+                    question: "How do you declare a pointer to an integer in C?",
+                    options: ["int ptr;", "int* ptr;", "pointer int ptr;", "int ptr*;"],
+                    answer: 1
+                },
+                {
+                    question: "Which function is used to allocate memory dynamically in C?",
+                    options: ["malloc()", "alloc()", "new()", "create()"],
+                    answer: 0
+                }
+            ]
+        };
+
+        // DOM elements
+        const homeScreen = document.getElementById('homeScreen');
+        const quizScreen = document.getElementById('quizScreen');
+        const resultsScreen = document.getElementById('resultsScreen');
+        const currentLanguageEl = document.getElementById('currentLanguage');
+        const questionCounterEl = document.getElementById('questionCounter');
+        const questionTextEl = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const nextBtn = document.getElementById('nextBtn');
+        const homeBtn = document.getElementById('homeBtn');
+        const backToHomeBtn = document.getElementById('backToHomeBtn');
+        const progressBar = document.getElementById('progressBar');
+        const finalScoreEl = document.getElementById('finalScore');
+        const resultMessageEl = document.getElementById('resultMessage');
+
+        // Quiz state
+        let currentLanguage = '';
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedOption = null;
+
+        // Initialize event listeners
+        document.querySelectorAll('.language-card').forEach(card => {
+            card.addEventListener('click', () => {
+                currentLanguage = card.dataset.language;
+                startQuiz(currentLanguage);
+            });
+        });
+
+        homeBtn.addEventListener('click', showHomeScreen);
+        backToHomeBtn.addEventListener('click', showHomeScreen);
+        nextBtn.addEventListener('click', handleNextQuestion);
+
+        // Function to start the quiz
+        function startQuiz(language) {
+            currentLanguage = language;
+            currentQuestionIndex = 0;
+            score = 0;
+            selectedOption = null;
+            
+            // Update UI
+            const languageNames = {
+                java: 'Java',
+                python: 'Python',
+                c: 'C'
+            };
+            currentLanguageEl.textContent = `${languageNames[language]} Quiz`;
+            
+            showQuizScreen();
+            loadQuestion();
+        }
+
+        // Function to load a question
+        function loadQuestion() {
+            const questions = quizData[currentLanguage];
+            const question = questions[currentQuestionIndex];
+            
+            // Update question counter
+            questionCounterEl.textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+            
+            // Update progress bar
+            const progress = ((currentQuestionIndex) / questions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            
+            // Update question text
+            questionTextEl.textContent = question.question;
+            
+            // Clear previous options
+            optionsContainer.innerHTML = '';
+            
+            // Create new options
+            question.options.forEach((option, index) => {
+                const optionEl = document.createElement('div');
+                optionEl.className = 'option';
+                optionEl.dataset.index = index;
+                optionEl.innerHTML = `
+                    <div class="option-letter">${String.fromCharCode(65 + index)}</div>
+                    <div class="option-text">${option}</div>
+                `;
+                optionEl.addEventListener('click', () => selectOption(optionEl, index));
+                optionsContainer.appendChild(optionEl);
+            });
+            
+            // Reset button state
+            nextBtn.textContent = currentQuestionIndex === questions.length - 1 ? 'Submit Quiz' : 'Next Question';
+            nextBtn.disabled = true;
+        }
+
+        // Function to handle option selection
+        function selectOption(optionEl, selectedIndex) {
+            // Remove previous selection
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Select new option
+            optionEl.classList.add('selected');
+            selectedOption = selectedIndex;
+            nextBtn.disabled = false;
+        }
+
+        // Function to handle next question or submit
+        function handleNextQuestion() {
+            if (selectedOption === null) return;
+            
+            const questions = quizData[currentLanguage];
+            const currentQuestion = questions[currentQuestionIndex];
+            
+            // Check if answer is correct
+            const isCorrect = selectedOption === currentQuestion.answer;
+            if (isCorrect) {
+                score++;
+                document.querySelector(`.option[data-index="${selectedOption}"]`).classList.add('correct');
+            } else {
+                document.querySelector(`.option[data-index="${selectedOption}"]`).classList.add('incorrect');
+                document.querySelector(`.option[data-index="${currentQuestion.answer}"]`).classList.add('correct');
+            }
+            
+            // Disable options after selection
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+            });
+            
+            // Move to next question or show results
+            if (currentQuestionIndex < questions.length - 1) {
+                setTimeout(() => {
+                    currentQuestionIndex++;
+                    selectedOption = null;
+                    loadQuestion();
+                }, 1000);
+            } else {
+                setTimeout(showResults, 1000);
+            }
+        }
+
+        // Function to show results screen
+        function showResults() {
+            quizScreen.style.display = 'none';
+            resultsScreen.style.display = 'block';
+            resultsScreen.classList.add('fade-in');
+            
+            // Update score display
+            finalScoreEl.textContent = `${score}/${quizData[currentLanguage].length}`;
+            
+            // Update result message
+            const percentage = (score / quizData[currentLanguage].length) * 100;
+            if (percentage === 100) {
+                resultMessageEl.textContent = "Perfect! You're a coding master!";
+                resultMessageEl.style.color = 'var(--neon-green)';
+            } else if (percentage >= 80) {
+                resultMessageEl.textContent = "Excellent! You know your stuff!";
+                resultMessageEl.style.color = 'var(--neon-green)';
+            } else if (percentage >= 60) {
+                resultMessageEl.textContent = "Good job! Keep practicing!";
+                resultMessageEl.style.color = 'var(--neon-blue)';
+            } else {
+                resultMessageEl.textContent = "Nice try! Review and try again!";
+                resultMessageEl.style.color = 'var(--neon-purple)';
+            }
+        }
+
+        // Navigation functions
+        function showHomeScreen() {
+            homeScreen.style.display = 'block';
+            quizScreen.style.display = 'none';
+            resultsScreen.style.display = 'none';
+            homeScreen.classList.add('fade-in');
+        }
+
+        function showQuizScreen() {
+            homeScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            resultsScreen.style.display = 'none';
+            quizScreen.classList.add('fade-in');
+        }
+
+        // Initialize the app
+        window.addEventListener('load', () => {
+            homeScreen.classList.add('fade-in');
+        });
+    </script>
+</body>
+</html>
